@@ -5,6 +5,7 @@ use core::str::from_utf8;
 
 use crate::commands::COMMANDS;
 use crate::consoleio::*;
+use crate::context::Context;
 
 const MAX_COMMAND_LEN: usize = 64;
 
@@ -21,46 +22,35 @@ Use command "help" to list available commands
 const CONSOLE_PROMPT: &str = "> ";
 
 pub struct Console {
-    io: ConsoleIO,
     buffer: [u8; MAX_COMMAND_LEN],
     write_cursor: usize,
     read_cursor: usize,
 }
 impl Console {
-    pub fn init(
-        tx_pin: hal::gpio::Pin<'A', 9>,
-        rx_pin: hal::gpio::Pin<'A', 10>,
-        usart: pac::USART1,
-        clocks: &hal::rcc::Clocks,
-    ) -> Self {
-        let io = ConsoleIO::init(tx_pin, rx_pin, usart, clocks);
+    pub fn init(ctx: &mut Context) -> Self {
 
-        let buffer = [0; MAX_COMMAND_LEN];
-        let mut console = Self {
-            io,
-            buffer,
+        ctx.io.write(WELCOME_MESSAGE);
+        ctx.io.write(CONSOLE_PROMPT);
+
+        Self {
+            buffer: [0; MAX_COMMAND_LEN],
             write_cursor: 0,
             read_cursor: 0,
-        };
-
-        console.io.write(WELCOME_MESSAGE);
-        console.io.write(CONSOLE_PROMPT);
-
-        console
+        }
     }
 
-    pub fn process(&mut self) {
-        let received = self.io.receive(&mut self.buffer[self.write_cursor..]);
+    pub fn process(&mut self, ctx: &mut Context) {
+        let received = ctx.io.receive(&mut self.buffer[self.write_cursor..]);
         if received > 0 {
             self.write_cursor += received;
             if let Some(nl) = self.find_newline() {
-                let mut argv: [Option<&str>; MAX_COMMAND_LEN / 2] = [None; MAX_COMMAND_LEN / 2];
+                let mut argv: [Option<&str>; MAX_COMMAND_LEN] = [None; MAX_COMMAND_LEN];
                 let mut argc = 0;
                 for (i, c) in self.buffer[0..nl + 1].iter().enumerate() {
                     if *c == SEP_CHAR || *c == CR_CHAR || *c == LF_CHAR {
                         argv[argc] = from_utf8(&self.buffer[self.read_cursor..i]).ok();
                         argc += 1;
-                        self.read_cursor = i;
+                        self.read_cursor = i + 1;
                     }
                 }
                 if let Some(name) = argv[0] {
@@ -68,16 +58,16 @@ impl Console {
                         let mut found = false;
                         for command in COMMANDS.iter() {
                             if command.name == name {
-                                (command.execute)(&mut self.io, &argv);
+                                (command.execute)(ctx, &argv);
                                 found = true;
                             }
                         }
                         if !found {
-                            self.io.write("Command not found.\n");
+                            ctx.io.write("Command not found.\n");
                         }
                     }
                 }
-                self.io.write(CONSOLE_PROMPT);
+                ctx.io.write(CONSOLE_PROMPT);
                 self.clear_buffer();
             }
         }
