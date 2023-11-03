@@ -1,0 +1,7 @@
+MEMORY
+{
+	RAM (rwx) : ORIGIN = 0x20000000, LENGTH = 128K
+	FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 512K
+}
+
+_stack_start = ORIGIN(RAM) + LENGTH(RAM);
