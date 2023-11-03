@@ -2,7 +2,7 @@ use crate::consoleio::*;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
 
-pub const COMMANDS: [Command; 2] = [
+pub const COMMANDS: [Command; 5] = [
     Command {
         name: "help",
         execute: help,
@@ -12,6 +12,21 @@ pub const COMMANDS: [Command; 2] = [
         name: "version",
         execute: ver,
         help: "Display version information",
+    },
+    Command {
+        name: "rgb",
+        execute: rgb,
+        help: "Set and get RGB values",
+    },
+    Command {
+        name: "imu",
+        execute: imu,
+        help: "Get current IMU readings",
+    },
+    Command {
+        name: "battery",
+        execute: battery,
+        help: "Display current battery level",
     },
 ];
 
@@ -34,5 +49,20 @@ fn help(io: &mut ConsoleIO, _argv: &[Option<&str>]) {
 
 fn ver(io: &mut ConsoleIO, _argv: &[Option<&str>]) {
     io.write(VERSION_STRING);
+    io.write("\n");
+}
+
+fn rgb(io: &mut ConsoleIO, _argv: &[Option<&str>]) {
+    io.write("Missing implementation.");
+    io.write("\n");
+}
+
+fn imu(io: &mut ConsoleIO, _argv: &[Option<&str>]) {
+    io.write("Missing implementation.");
+    io.write("\n");
+}
+
+fn battery(io: &mut ConsoleIO, _argv: &[Option<&str>]) {
+    io.write("Missing implementation.");
     io.write("\n");
 }
