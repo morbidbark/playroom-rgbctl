@@ -11,12 +11,6 @@ use playroom_rgbctl::console::Console;
 use playroom_rgbctl::consoleio::ConsoleIO;
 use playroom_rgbctl::context::Context;
 
-// FTDI Pinout
-// Black - GND
-// Yellow - RX
-// Orange - TX
-
-
 #[entry]
 fn main() -> ! {
     
@@ -28,8 +22,8 @@ fn main() -> ! {
 
     let gpioa = dp.GPIOA.split();
     let consoleio = ConsoleIO::init(
-        gpioa.pa9,
-        gpioa.pa10,
+        gpioa.pa9, // TX pin
+        gpioa.pa10, // RX pin
         dp.USART1,
         &clocks,
     );
