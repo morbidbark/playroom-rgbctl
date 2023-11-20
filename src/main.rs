@@ -10,6 +10,7 @@ use crate::hal::{pac, prelude::*};
 use playroom_rgbctl::console::Console;
 use playroom_rgbctl::consoleio::ConsoleIO;
 use playroom_rgbctl::context::Context;
+use playroom_rgbctl::imu::IMU;
 
 #[entry]
 fn main() -> ! {
@@ -20,18 +21,28 @@ fn main() -> ! {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
 
+    // Configure USART1
     let gpioa = dp.GPIOA.split();
-    let consoleio = ConsoleIO::init(
+    let io = ConsoleIO::init(
         gpioa.pa9, // TX pin
         gpioa.pa10, // RX pin
         dp.USART1,
         &clocks,
     );
 
+    // Configure debug LED
     let gpioc = dp.GPIOC.split();
-    let led = gpioc.pc13.into_push_pull_output();
+    let debug_led = gpioc.pc13.into_push_pull_output();
 
-    let mut ctx = Context { debug_led: led, io: consoleio };
+    // Configure I2C1
+    let gpiob = dp.GPIOB.split();
+    let imu = IMU::init(
+        gpiob.pb6,
+        gpiob.pb7,
+        dp.I2C1,
+        &clocks,
+    );
+    let mut ctx = Context { debug_led, io, imu };
 
     let mut console = Console::init(&mut ctx);
 

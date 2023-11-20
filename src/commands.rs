@@ -1,3 +1,4 @@
+use numtoa::NumToA;
 use crate::context::Context;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
@@ -80,8 +81,23 @@ fn rgb(ctx: &mut Context, _argv: &[Option<&str>]) {
 }
 
 fn imu(ctx: &mut Context, _argv: &[Option<&str>]) {
-    ctx.io.write("Missing implementation.");
-    ctx.io.write("\n");
+    match ctx.imu.orientation() {
+        Ok((p, y, r)) => {
+            let mut buffer = [0u8; 20];
+            ctx.io.write("Pitch: ");
+            ctx.io.write(p.numtoa_str(10, &mut buffer));
+            ctx.io.write("\n");
+            ctx.io.write("Yaw: ");
+            ctx.io.write(y.numtoa_str(10, &mut buffer));
+            ctx.io.write("\n");
+            ctx.io.write("Roll: ");
+            ctx.io.write(r.numtoa_str(10, &mut buffer));
+            ctx.io.write("\n");
+        }
+        Err(_) => {
+            ctx.io.write("Error reading from IMU.\n");
+        }
+    };
 }
 
 fn battery(ctx: &mut Context, _argv: &[Option<&str>]) {
