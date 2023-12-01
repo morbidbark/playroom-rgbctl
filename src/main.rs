@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use panic_halt as _;
+use panic_probe as _;
 use cortex_m_rt::entry;
 
 use stm32f4xx_hal as hal;
@@ -20,6 +20,9 @@ fn main() -> ! {
     // Configure clocks
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
+
+    // Create delay timer
+    let counter = dp.TIM2.counter_ms(&clocks);
 
     // Configure USART1
     let gpioa = dp.GPIOA.split();
@@ -42,7 +45,7 @@ fn main() -> ! {
         dp.I2C1,
         &clocks,
     );
-    let mut ctx = Context { debug_led, io, imu };
+    let mut ctx = Context { counter, debug_led, io, imu };
 
     let mut console = Console::init(&mut ctx);
 

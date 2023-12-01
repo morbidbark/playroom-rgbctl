@@ -30,8 +30,11 @@ impl ConsoleIO {
 
     pub fn receive(&mut self, buf: &mut [u8]) -> usize {
         let mut received = 0;
-        while self.rx.is_rx_not_empty() {
-            buf[received] = self.rx.read().unwrap();
+        while self.rx.is_rx_not_empty() && received < buf.len() {
+            buf[received] = match self.rx.read() {
+                Ok(byte) => byte,
+                Err(_) => continue,
+            };
             received += 1;
         }
         received

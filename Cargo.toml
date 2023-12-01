@@ -8,4 +8,12 @@ cortex-m = "0.7.7"
 cortex-m-rt = "0.7.3"
 numtoa = "0.2.4"
 panic-halt = "0.2.0"
+panic-probe = { version = "0.2", features = [ "print-rtt" ] }
 stm32f4xx-hal = { version = "0.17.1", features = ["stm32f411"] }
+
+[profile.dev]
+debug = 1
+
+[profile.release]
+debug = 1
+
