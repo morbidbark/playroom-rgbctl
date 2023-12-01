@@ -57,9 +57,9 @@ impl IMU {
 
     pub fn orientation(&mut self) -> Result<(i16, i16, i16), i2c::Error> {
         Ok((
-            self.read_i16(EUL_Pitch_LSB)?,
-            self.read_i16(EUL_Heading_LSB)?,
-            self.read_i16(EUL_Roll_LSB)?,
+            self.read_i16(EUL_Pitch_LSB)? / 16,
+            self.read_i16(EUL_Heading_LSB)? / 16,
+            self.read_i16(EUL_Roll_LSB)? / 16,
         ))
     }
 
