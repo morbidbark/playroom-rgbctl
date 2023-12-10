@@ -1,6 +1,7 @@
 use numtoa::NumToA;
 use crate::context::Context;
 use stm32f4xx_hal::prelude::*;
+use crate::rgbcontroller::*;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
 
@@ -78,9 +79,27 @@ fn led(ctx: &mut Context, argv: &[Option<&str>]) {
     }
 }
 
-fn rgb(ctx: &mut Context, _argv: &[Option<&str>]) {
-    ctx.io.write("Missing implementation.");
-    ctx.io.write("\n");
+fn rgb(ctx: &mut Context, argv: &[Option<&str>]) {
+    if let Some(subcommand) = argv[1] {
+        match subcommand {
+            "on" => ctx.rgb.on(),
+            "off" => ctx.rgb.off(),
+            "set" => {
+                if let (Some(r), Some(g), Some(b)) = (
+                    argv[2].and_then(|v| v.parse::<u8>().ok()),
+                    argv[3].and_then(|v| v.parse::<u8>().ok()),
+                    argv[4].and_then(|v| v.parse::<u8>().ok()),
+                ){
+                   ctx.rgb.set_color(Color::Red, r);
+                   ctx.rgb.set_color(Color::Green, g);
+                   ctx.rgb.set_color(Color::Blue, b);
+                } else {
+                    ctx.io.write("Invalid value.\n");
+                }
+            }
+            _ => ctx.io.write("Invalid subcommand.\n"),
+        }
+    }
 }
 
 fn imu(ctx: &mut Context, _argv: &[Option<&str>]) {
