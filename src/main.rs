@@ -3,6 +3,7 @@
 
 use cortex_m_rt::entry;
 use panic_probe as _;
+use defmt_rtt as _;
 
 use crate::hal::{pac, prelude::*};
 use stm32f4xx_hal as hal;

@@ -1,7 +1,10 @@
 [target.thumbv7em-none-eabihf]
 runner = "probe-run --chip STM32F411CEUx"
 rustflags = [
-  "-C", "link-arg=-Tlink.x",
+  "-Clinker=arm-none-eabi-ld",
+  "-Clink-arg=-Tlink.x",
+  "-Clink-arg=-Map=output.map",
+  "-Clink-arg=-Tdefmt.x",
 ]
 
 [build]
