@@ -2,8 +2,8 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use panic_probe as _;
 use defmt_rtt as _;
+use panic_probe as _;
 
 use crate::hal::{pac, prelude::*};
 use stm32f4xx_hal as hal;
@@ -12,7 +12,8 @@ use playroom_rgbctl::console::Console;
 use playroom_rgbctl::consoleio::ConsoleIO;
 use playroom_rgbctl::context::Context;
 use playroom_rgbctl::imu::IMU;
-use playroom_rgbctl::rgbcontroller::RGBController;
+use playroom_rgbctl::rgbcontroller::*;
+use playroom_rgbctl::rotary_encoder::*;
 
 #[entry]
 fn main() -> ! {
@@ -50,12 +51,33 @@ fn main() -> ! {
         debug_led,
         io,
         imu,
-        rgb,
     };
 
     let mut console = Console::init(&mut ctx);
 
+    // Setup RGB rotary encoders
+    let mut r_encoder = Encoder::init(
+        gpioa.pa0.into_pull_down_input(),
+        gpioa.pa1.into_pull_down_input(),
+        Color::Red,
+    );
+    let mut g_encoder = Encoder::init(
+        gpioa.pa2.into_pull_down_input(),
+        gpioa.pa3.into_pull_down_input(),
+        Color::Green,
+    );
+    let mut b_encoder = Encoder::init(
+        gpioa.pa4.into_pull_down_input(),
+        gpioa.pa5.into_pull_down_input(),
+        Color::Blue,
+    );
+
     loop {
+        // Read rotary encoders
+        r_encoder.process();
+        g_encoder.process();
+        b_encoder.process();
+        // Process console IO
         console.process(&mut ctx);
     }
 }

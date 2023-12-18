@@ -7,7 +7,6 @@ use stm32f4xx_hal::{
 use crate::{
     consoleio::ConsoleIO,
     imu::IMU,
-    rgbcontroller::RGBController,
 };
 
 pub struct Context {
@@ -15,5 +14,4 @@ pub struct Context {
     pub debug_led: Pin<'C', 13, Output>,
     pub io: ConsoleIO,
     pub imu: IMU,
-    pub rgb: RGBController,
 }
