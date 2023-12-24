@@ -2,7 +2,7 @@ use core::ops::DerefMut;
 use embedded_hal::digital::v2::InputPin;
 use crate::rgbcontroller::*;
 
-const COLOR_INCREMENT: u8 = 10;
+const COLOR_INCREMENT: u8 = 12;
 
 pub struct Encoder<T: InputPin, V: InputPin> {
     clk: T,

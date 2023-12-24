@@ -11,7 +11,7 @@ pub enum Color {
     Blue,
 }
 pub struct RGBController {
-    pwm: Pwm<TIM3, (Channel1<TIM3>, Channel2<TIM3>, Channel3<TIM3>), 1000>,
+    pwm: Pwm<TIM3, (Channel1<TIM3>, Channel2<TIM3>, Channel3<TIM3>), 1_000_000>,
     r: u8,
     g: u8,
     b: u8,
@@ -30,7 +30,7 @@ impl RGBController {
                 Channel2::new(green_pin),
                 Channel3::new(blue_pin),
             ),
-            10.millis::<1, 1000>(),
+            1.millis::<1, 1_000_000>(),
             &clocks
         );
         let mut ctl = Self { pwm, r: 0, g: 0, b: 0 };
@@ -55,8 +55,8 @@ impl RGBController {
             Color::Green => (Channel::C2, self.g),
             Color::Blue => (Channel::C3, self.b),
         };
-        let duty_cycle = (self.pwm.get_max_duty() as u32 * value as u32) as u16 / 255;
-        self.pwm.set_duty(channel, duty_cycle);
+        let duty_cycle = (self.pwm.get_max_duty() as u32) * (value as u32) / 255;
+        self.pwm.set_duty(channel, duty_cycle as u16);
     }
     pub fn set_color(&mut self, color: &Color, value: u8) {
         match color {
