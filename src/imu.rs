@@ -9,6 +9,7 @@ use stm32f4xx_hal::{
     prelude::*,
     rcc::Clocks,
 };
+use vek::Quaternion;
 
 pub static IMUReader: Mutex<RefCell<Option<IMU>>> = Mutex::new(RefCell::new(None));
 
@@ -37,6 +38,11 @@ const EUL_Roll_MSB: u8 = 0x1D; // Output data register - Roll
 const EUL_Pitch_LSB: u8 = 0x1E; // Output data register - Pitch
 const EUL_Pitch_MSB: u8 = 0x1F; // Output data register - Pitch
 const OPR_MODE: u8 = 0x3D; // Operation Mode
+
+const QUA_Data_W_LSB: u8 = 0x20; // Output data register - Quaternion W component
+const QUA_Data_X_LSB: u8 = 0x22; // Output data register - Quaternion X component
+const QUA_Data_Y_LSB: u8 = 0x24; // Output data register - Quaternion Y component
+const QUA_Data_Z_LSB: u8 = 0x26; // Output data register - Quaternion Z component
 
 pub struct IMU {
     imu: I2c<I2C1>,
@@ -73,6 +79,18 @@ impl IMU {
             self.read_i16(EUL_Heading_LSB)? / 16,
             self.read_i16(EUL_Roll_LSB)? / 16,
         ))
+    }
+
+    pub fn orientation_quat(&mut self) -> Result<Quaternion<f32>, i2c::Error> {
+        let lsb: f32 = 2_i16.pow(14).into();
+        Ok(
+            Quaternion::from_xyzw(
+                self.read_i16(QUA_Data_X_LSB)? as f32 / lsb,
+                self.read_i16(QUA_Data_Y_LSB)? as f32 / lsb,
+                self.read_i16(QUA_Data_Z_LSB)? as f32 / lsb,
+                self.read_i16(QUA_Data_W_LSB)? as f32 / lsb,
+            ).normalized()
+        )
     }
 
     fn read_i16(&mut self, addr: u8) -> Result<i16, i2c::Error> {

@@ -45,24 +45,33 @@ impl ModeRun for DialMode {
 
 use crate::imu::*;
 use crate::rgbcontroller::*;
+use vek::Vec3;
+
+const X: Vec3<f32> = Vec3::new(1.0, 0.0, 0.0);
+const Y: Vec3<f32> = Vec3::new(0.0, 1.0, 0.0);
+const Z: Vec3<f32> = Vec3::new(0.0, 0.0, 1.0);
+
+fn abs(x: f32) -> f32 {
+    f32::from_bits(x.to_bits() & (i32::MAX as u32))
+}
+
 struct TiltMode;
 impl ModeRun for TiltMode {
     fn run(&self) {
-        if let Ok((pitch, yaw, roll)) = cortex_m::interrupt::free(|cs| {
-            IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation()
+        if let Ok(q) = cortex_m::interrupt::free(|cs| {
+            IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation_quat()
         }) {
-            // pitch is -180 -  180 starting at 0. pitch down is positive
-            // yaw is 0 - 360 starting at 0. clockwise is positive
-            // roll is -90 - 90 starting at 0. roll left is positive
+            // reference vector is the positive Z axis
+            let refvec = q * Z;
             cortex_m::interrupt::free(|cs| {
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Red, (127 + pitch) as u8
+                    &Color::Red, (255.0 * abs(refvec.dot(X))) as u8
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Green, (127 + (yaw - 180)) as u8
+                    &Color::Green, (255.0 * abs(refvec.dot(Y))) as u8
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Blue, (127 + roll) as u8
+                    &Color::Blue, (255.0 * abs(refvec.dot(Z))) as u8
                 );
             });
         }

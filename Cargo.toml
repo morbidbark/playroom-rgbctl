@@ -14,6 +14,7 @@ numtoa = "0.2.4"
 panic-halt = "0.2.0"
 panic-probe = { version = "0.2", features = [ "print-rtt" ] }
 stm32f4xx-hal = { version = "0.17.1", features = ["stm32f411"] }
+vek = { version = "0.16.1", default-features = false, features = ["libm"] }
 
 [profile.dev]
 debug = 1
