@@ -61,17 +61,15 @@ impl ModeRun for TiltMode {
         if let Ok(q) = cortex_m::interrupt::free(|cs| {
             IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation_quat()
         }) {
-            // reference vector is the positive Z axis
-            let refvec = q * Z;
             cortex_m::interrupt::free(|cs| {
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Red, (255.0 * abs(refvec.dot(X))) as u8
+                    &Color::Red, (255.0 * abs((q * Z).dot(Z))) as u8
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Green, (255.0 * abs(refvec.dot(Y))) as u8
+                    &Color::Green, (255.0 * abs((q * Y).dot(Z))) as u8
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Blue, (255.0 * abs(refvec.dot(Z))) as u8
+                    &Color::Blue, (255.0 * abs((q * X).dot(Z))) as u8
                 );
             });
         }
