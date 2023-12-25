@@ -1,4 +1,3 @@
-
 enum Mode {
     Dial(DialMode),
     Tilt(TiltMode),

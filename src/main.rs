@@ -4,8 +4,9 @@
 use cortex_m_rt::entry;
 use defmt_rtt as _;
 use panic_probe as _;
-
-use crate::hal::{pac, prelude::*};
+use cortex_m::interrupt::Mutex;
+use core::cell::RefCell;
+use crate::hal::{pac::{self, interrupt}, prelude::*, gpio::{Edge, PC15, Input}};
 use stm32f4xx_hal as hal;
 
 use playroom_rgbctl::console::Console;
@@ -16,9 +17,20 @@ use playroom_rgbctl::rgbcontroller::*;
 use playroom_rgbctl::rotary_encoder::*;
 use playroom_rgbctl::modes::manager::ModeManager;
 
+static MODE_MANAGER: Mutex<RefCell<Option<ModeManager>>> = Mutex::new(RefCell::new(None));
+static MODE_SELECT: Mutex<RefCell<Option<PC15<Input>>>> = Mutex::new(RefCell::new(None));
+
+#[interrupt]
+fn EXTI15_10() {
+    cortex_m::interrupt::free(|cs| {
+        MODE_MANAGER.borrow(cs).borrow_mut().as_mut().unwrap().next();
+        MODE_SELECT.borrow(cs).borrow_mut().as_mut().unwrap().clear_interrupt_pending_bit();
+    });
+}
+
 #[entry]
 fn main() -> ! {
-    let dp = pac::Peripherals::take().unwrap();
+    let mut dp = pac::Peripherals::take().unwrap();
 
     // Configure clocks
     let rcc = dp.RCC.constrain();
@@ -74,10 +86,26 @@ fn main() -> ! {
         )));
     });
 
-    let mut mode_manager = ModeManager::new();
-    mode_manager.next();
+    // Configure mode switch interrupt pin
+    let mut syscfg = dp.SYSCFG.constrain();
+    let mut mode_select = gpioc.pc15.into_pull_down_input();
+    mode_select.make_interrupt_source(&mut syscfg);
+    mode_select.trigger_on_edge(&mut dp.EXTI, Edge::Rising);
+    mode_select.enable_interrupt(&mut dp.EXTI);
+    unsafe {
+        cortex_m::peripheral::NVIC::unmask(mode_select.interrupt());
+    }
+    cortex_m::interrupt::free(|cs| {
+        MODE_SELECT.borrow(cs).replace(Some(mode_select));
+    });
+
+    cortex_m::interrupt::free(|cs| {
+        MODE_MANAGER.borrow(cs).replace(Some(ModeManager::new()));
+    });
     loop {
-        mode_manager.process();
+        cortex_m::interrupt::free(|cs| {
+            MODE_MANAGER.borrow(cs).borrow().as_ref().unwrap().process();
+        });
         // Process console IO
         console.process(&mut ctx);
     }
