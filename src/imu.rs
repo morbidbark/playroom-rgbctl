@@ -1,3 +1,7 @@
+#![allow(dead_code, non_upper_case_globals)]
+
+use core::cell::RefCell;
+use cortex_m::interrupt::Mutex;
 use stm32f4xx_hal::{
     gpio::alt::I2cCommon,
     i2c::{self, I2c, Mode},
@@ -5,6 +9,8 @@ use stm32f4xx_hal::{
     prelude::*,
     rcc::Clocks,
 };
+
+pub static IMUReader: Mutex<RefCell<Option<IMU>>> = Mutex::new(RefCell::new(None));
 
 const ADDRESS: u8 = 0x28;
 
@@ -41,7 +47,7 @@ impl IMU {
         sda: impl Into<<I2C1 as I2cCommon>::Sda>,
         i2c: I2C1,
         clocks: &Clocks,
-    ) -> Self {
+    ) {
         let imu = I2c::new(
             i2c,
             (scl, sda),
@@ -51,10 +57,16 @@ impl IMU {
             &clocks,
         );
         let mut result = Self { imu };
-        result.write(OPR_MODE, NDOF_MODE).expect("Failed to set IMU config mode");
         result
+            .write(OPR_MODE, NDOF_MODE)
+            .expect("Failed to set IMU config mode");
+
+        cortex_m::interrupt::free(|cs| {
+            IMUReader.borrow(cs).replace(Some(result));
+        });
     }
 
+    /// Returns (pitch, yaw, roll)
     pub fn orientation(&mut self) -> Result<(i16, i16, i16), i2c::Error> {
         Ok((
             self.read_i16(EUL_Pitch_LSB)? / 16,

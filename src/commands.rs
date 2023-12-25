@@ -3,6 +3,7 @@ use core::ops::DerefMut;
 use crate::context::Context;
 use stm32f4xx_hal::prelude::*;
 use crate::rgbcontroller::*;
+use crate::imu::*;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
 
@@ -113,23 +114,25 @@ fn imu(ctx: &mut Context, _argv: &[Option<&str>]) {
     ctx.counter.start(display_freq).unwrap();
     while rcvbuf[0] != EXIT_CHAR {
         if let Ok(_) = ctx.counter.wait() {
-            match ctx.imu.orientation() {
-                Ok((p, y, r)) => {
-                    let mut buffer = [0u8; 20];
-                    ctx.io.write("Pitch: ");
-                    ctx.io.write(p.numtoa_str(10, &mut buffer));
-                    ctx.io.write("\n");
-                    ctx.io.write("Yaw: ");
-                    ctx.io.write(y.numtoa_str(10, &mut buffer));
-                    ctx.io.write("\n");
-                    ctx.io.write("Roll: ");
-                    ctx.io.write(r.numtoa_str(10, &mut buffer));
-                    ctx.io.write("\n--------\n");
-                }
-                Err(_) => {
-                    ctx.io.write("Error reading from IMU.\n");
-                }
-            };
+            cortex_m::interrupt::free(|cs| {
+                match IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation() {
+                    Ok((p, y, r)) => {
+                        let mut buffer = [0u8; 20];
+                        ctx.io.write("Pitch: ");
+                        ctx.io.write(p.numtoa_str(10, &mut buffer));
+                        ctx.io.write("\n");
+                        ctx.io.write("Yaw: ");
+                        ctx.io.write(y.numtoa_str(10, &mut buffer));
+                        ctx.io.write("\n");
+                        ctx.io.write("Roll: ");
+                        ctx.io.write(r.numtoa_str(10, &mut buffer));
+                        ctx.io.write("\n--------\n");
+                    }
+                    Err(_) => {
+                        ctx.io.write("Error reading from IMU.\n");
+                    }
+                };
+            });
             ctx.counter.start(display_freq).unwrap();
         }
         ctx.io.receive(&mut rcvbuf);

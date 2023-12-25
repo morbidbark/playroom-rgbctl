@@ -14,6 +14,7 @@ use playroom_rgbctl::context::Context;
 use playroom_rgbctl::imu::IMU;
 use playroom_rgbctl::rgbcontroller::*;
 use playroom_rgbctl::rotary_encoder::*;
+use playroom_rgbctl::modes::manager::ModeManager;
 
 #[entry]
 fn main() -> ! {
@@ -32,7 +33,7 @@ fn main() -> ! {
     let counter = dp.TIM2.counter_ms(&clocks);
 
     // Setup PWM generator pins
-    let rgb = RGBController::init(gpioa.pa6, gpioa.pa7, gpiob.pb0, dp.TIM3, &clocks);
+    RGBController::init(gpioa.pa6, gpioa.pa7, gpiob.pb0, dp.TIM3, &clocks);
 
     // Configure USART1
     let io = ConsoleIO::init(
@@ -45,38 +46,38 @@ fn main() -> ! {
     let debug_led = gpioc.pc13.into_push_pull_output();
 
     // Configure I2C1
-    let imu = IMU::init(gpiob.pb6, gpiob.pb7, dp.I2C1, &clocks);
+    IMU::init(gpiob.pb6, gpiob.pb7, dp.I2C1, &clocks);
     let mut ctx = Context {
         counter,
         debug_led,
         io,
-        imu,
     };
 
     let mut console = Console::init(&mut ctx);
 
     // Setup RGB rotary encoders
-    let mut r_encoder = Encoder::init(
-        gpioa.pa0.into_pull_down_input(),
-        gpioa.pa1.into_pull_down_input(),
-        Color::Red,
-    );
-    let mut g_encoder = Encoder::init(
-        gpioa.pa2.into_pull_down_input(),
-        gpioa.pa3.into_pull_down_input(),
-        Color::Green,
-    );
-    let mut b_encoder = Encoder::init(
-        gpioa.pa4.into_pull_down_input(),
-        gpioa.pa5.into_pull_down_input(),
-        Color::Blue,
-    );
+    cortex_m::interrupt::free(|cs| {
+        RENCODER.borrow(cs).replace(Some(Encoder::init(
+            gpioa.pa0.into_pull_down_input(),
+            gpioa.pa1.into_pull_down_input(),
+            Color::Red,
+        )));
+        GENCODER.borrow(cs).replace(Some(Encoder::init(
+            gpioa.pa2.into_pull_down_input(),
+            gpioa.pa3.into_pull_down_input(),
+            Color::Green,
+        )));
+        BENCODER.borrow(cs).replace(Some(Encoder::init(
+            gpioa.pa4.into_pull_down_input(),
+            gpioa.pa5.into_pull_down_input(),
+            Color::Blue,
+        )));
+    });
 
+    let mut mode_manager = ModeManager::new();
+    mode_manager.next();
     loop {
-        // Read rotary encoders
-        r_encoder.process();
-        g_encoder.process();
-        b_encoder.process();
+        mode_manager.process();
         // Process console IO
         console.process(&mut ctx);
     }
