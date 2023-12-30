@@ -1,30 +1,52 @@
 #![no_std]
 #![no_main]
 
+use crate::hal::{
+    gpio::{Edge, Input, PC15},
+    pac::{self, interrupt},
+    prelude::*,
+    timer::counter::CounterMs,
+};
+use core::cell::RefCell;
+use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 use defmt_rtt as _;
 use panic_probe as _;
-use cortex_m::interrupt::Mutex;
-use core::cell::RefCell;
-use crate::hal::{pac::{self, interrupt}, prelude::*, gpio::{Edge, PC15, Input}};
 use stm32f4xx_hal as hal;
 
 use playroom_rgbctl::console::Console;
 use playroom_rgbctl::consoleio::ConsoleIO;
 use playroom_rgbctl::context::Context;
 use playroom_rgbctl::imu::IMU;
+use playroom_rgbctl::modes::manager::ModeManager;
 use playroom_rgbctl::rgbcontroller::*;
 use playroom_rgbctl::rotary_encoder::*;
-use playroom_rgbctl::modes::manager::ModeManager;
 
 static MODE_MANAGER: Mutex<RefCell<Option<ModeManager>>> = Mutex::new(RefCell::new(None));
 static MODE_SELECT: Mutex<RefCell<Option<PC15<Input>>>> = Mutex::new(RefCell::new(None));
+static DEBOUNCE: Mutex<RefCell<Option<CounterMs<pac::TIM4>>>> = Mutex::new(RefCell::new(None));
+const DEBOUNCE_TIME: u32 = 20;
 
 #[interrupt]
 fn EXTI15_10() {
     cortex_m::interrupt::free(|cs| {
-        MODE_MANAGER.borrow(cs).borrow_mut().as_mut().unwrap().next();
-        MODE_SELECT.borrow(cs).borrow_mut().as_mut().unwrap().clear_interrupt_pending_bit();
+        let mut debounce_borrow = DEBOUNCE.borrow(cs).borrow_mut();
+        let debounce = debounce_borrow.as_mut().unwrap();
+        if debounce.wait().is_ok() {
+            MODE_MANAGER
+                .borrow(cs)
+                .borrow_mut()
+                .as_mut()
+                .unwrap()
+                .next();
+            let _ = debounce.start(DEBOUNCE_TIME.millis());
+        }
+        MODE_SELECT
+            .borrow(cs)
+            .borrow_mut()
+            .as_mut()
+            .unwrap()
+            .clear_interrupt_pending_bit();
     });
 }
 
@@ -97,6 +119,12 @@ fn main() -> ! {
     }
     cortex_m::interrupt::free(|cs| {
         MODE_SELECT.borrow(cs).replace(Some(mode_select));
+    });
+    // Create global counter for button debouncing
+    let mut debounce = dp.TIM4.counter_ms(&clocks);
+    let _ = debounce.start(DEBOUNCE_TIME.millis());
+    cortex_m::interrupt::free(|cs| {
+        DEBOUNCE.borrow(cs).replace(Some(debounce));
     });
 
     cortex_m::interrupt::free(|cs| {
