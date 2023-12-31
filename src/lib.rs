@@ -9,3 +9,4 @@ pub(crate) mod commands;
 pub mod rotary_encoder;
 
 pub mod modes;
+pub mod mic;

@@ -21,6 +21,7 @@ use playroom_rgbctl::imu::IMU;
 use playroom_rgbctl::modes::manager::ModeManager;
 use playroom_rgbctl::rgbcontroller::*;
 use playroom_rgbctl::rotary_encoder::*;
+use playroom_rgbctl::mic::*;
 
 static MODE_MANAGER: Mutex<RefCell<Option<ModeManager>>> = Mutex::new(RefCell::new(None));
 static MODE_SELECT: Mutex<RefCell<Option<PC15<Input>>>> = Mutex::new(RefCell::new(None));
@@ -107,6 +108,12 @@ fn main() -> ! {
             Color::Blue,
         )));
     });
+
+    // Setup ADC for Microphone input
+    Mic::init(
+        gpiob.pb1.into_analog(),
+        dp.ADC1,
+    );
 
     // Configure mode switch interrupt pin
     let mut syscfg = dp.SYSCFG.constrain();

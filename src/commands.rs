@@ -94,9 +94,9 @@ fn rgb(ctx: &mut Context, argv: &[Option<&str>]) {
                             argv[3].and_then(|v| v.parse::<u8>().ok()),
                             argv[4].and_then(|v| v.parse::<u8>().ok()),
                         ){
-                           rgb.set_color(&Color::Red, r);
-                           rgb.set_color(&Color::Green, g);
-                           rgb.set_color(&Color::Blue, b);
+                           rgb.set_color(&Color::Red, r, true);
+                           rgb.set_color(&Color::Green, g, true);
+                           rgb.set_color(&Color::Blue, b, true);
                         } else {
                             ctx.io.write("Invalid value.\n");
                         }

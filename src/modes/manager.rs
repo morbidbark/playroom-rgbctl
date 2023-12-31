@@ -1,6 +1,7 @@
 enum Mode {
     Dial(DialMode),
     Tilt(TiltMode),
+    Audio(AudioMode),
 }
 
 trait ModeRun {
@@ -19,13 +20,15 @@ impl ModeManager {
     pub fn next(&mut self) {
         self.mode = match self.mode {
             Mode::Dial(_) => Mode::Tilt(TiltMode),
-            Mode::Tilt(_) => Mode::Dial(DialMode),
+            Mode::Tilt(_) => Mode::Audio(AudioMode),
+            Mode::Audio(_) => Mode::Dial(DialMode),
         };
     }
     pub fn process(&self) {
         match &self.mode {
             Mode::Dial(m) => m.run(),
             Mode::Tilt(m) => m.run(),
+            Mode::Audio(m) => m.run(),
         }
     }
 }
@@ -38,6 +41,7 @@ impl ModeRun for DialMode {
             RENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
             GENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
             BENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
+            RGB.borrow(cs).borrow_mut().as_mut().unwrap().update_all();
         });
     }
 }
@@ -62,15 +66,35 @@ impl ModeRun for TiltMode {
         }) {
             cortex_m::interrupt::free(|cs| {
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Red, (255.0 * abs((q * Z).dot(Z))) as u8
+                    &Color::Red, (255.0 * abs((q * Z).dot(Z))) as u8,
+                    true
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Green, (255.0 * abs((q * Y).dot(Z))) as u8
+                    &Color::Green, (255.0 * abs((q * Y).dot(Z))) as u8,
+                    true
                 );
                 RGB.borrow(cs).borrow_mut().as_mut().unwrap().set_color(
-                    &Color::Blue, (255.0 * abs((q * X).dot(Z))) as u8
+                    &Color::Blue, (255.0 * abs((q * X).dot(Z))) as u8,
+                    true
                 );
             });
         }
+    }
+}
+
+use defmt::*;
+use crate::mic::*;
+struct AudioMode;
+impl ModeRun for AudioMode {
+    fn run(&self) {
+        cortex_m::interrupt::free(|cs| {
+            RENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
+            GENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
+            BENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
+
+            let value = MIC.borrow(cs).borrow_mut().as_mut().unwrap().amplitude();
+            debug!("{}", value);
+            RGB.borrow(cs).borrow_mut().as_mut().unwrap().scale_all(value);
+        });
     }
 }

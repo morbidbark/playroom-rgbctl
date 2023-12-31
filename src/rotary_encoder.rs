@@ -34,13 +34,13 @@ impl<T: InputPin, V: InputPin> Encoder<T, V> {
         if clk && !self.clk_prev && dt && self.dt_prev {
                 cortex_m::interrupt::free(|cs| {
                     if let Some(rgb) = RGB.borrow(cs).borrow_mut().as_mut() {
-                        rgb.sub_color(&self.color, COLOR_INCREMENT);
+                        rgb.sub_color(&self.color, COLOR_INCREMENT, false);
                     }
                 });
         } else if dt && !self.dt_prev && clk && self.clk_prev {
             cortex_m::interrupt::free(|cs| {
                 if let Some(rgb) = RGB.borrow(cs).borrow_mut().as_mut() {
-                    rgb.add_color(&self.color, COLOR_INCREMENT);
+                    rgb.add_color(&self.color, COLOR_INCREMENT, false);
                 }
             });
         }

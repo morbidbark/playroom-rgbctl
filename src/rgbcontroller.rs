@@ -58,30 +58,55 @@ impl RGBController {
         let duty_cycle = (self.pwm.get_max_duty() as u32) * (value as u32) / 255;
         self.pwm.set_duty(channel, duty_cycle as u16);
     }
-    pub fn set_color(&mut self, color: &Color, value: u8) {
+    pub fn update_all(&mut self) {
+        self.update_duty(&Color::Red);
+        self.update_duty(&Color::Green);
+        self.update_duty(&Color::Blue);
+    }
+    pub fn set_color(&mut self, color: &Color, value: u8, update: bool) {
         match color {
             Color::Red => self.r = value,
             Color::Green => self.g = value,
             Color::Blue => self.b = value,
         }
-        self.update_duty(color);
+        if update {
+            self.update_duty(color);
+        }
     }
 
-    pub fn add_color(&mut self, color: &Color, value: u8) {
+    pub fn add_color(&mut self, color: &Color, value: u8, update: bool) {
         match color {
             Color::Red => self.r = self.r.saturating_add(value),
             Color::Green => self.g = self.g.saturating_add(value),
             Color::Blue => self.b = self.b.saturating_add(value),
         }
-        self.update_duty(color);
+        if update {
+            self.update_duty(color);
+        }
     }
 
-    pub fn sub_color(&mut self, color: &Color, value: u8) {
+    pub fn sub_color(&mut self, color: &Color, value: u8, update: bool) {
         match color {
             Color::Red => self.r = self.r.saturating_sub(value),
             Color::Green => self.g = self.g.saturating_sub(value),
             Color::Blue => self.b = self.b.saturating_sub(value),
         }
-        self.update_duty(color);
+        if update {
+            self.update_duty(color);
+        }
+    }
+
+    pub fn set_duty(&mut self, channel: Channel, value: u8) {
+        let duty_cycle = (self.pwm.get_max_duty() as u32) * (value as u32) / 255;
+        self.pwm.set_duty(channel, duty_cycle as u16);
+    }
+
+    pub fn scale_all(&mut self, scale: f32) {
+        let r = ((self.r as f32) * scale) as u8;
+        let g = ((self.g as f32) * scale) as u8;
+        let b = ((self.b as f32) * scale) as u8;
+        self.set_duty(Channel::C1, r);
+        self.set_duty(Channel::C2, g);
+        self.set_duty(Channel::C3, b);
     }
 }
