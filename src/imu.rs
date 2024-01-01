@@ -83,14 +83,13 @@ impl IMU {
 
     pub fn orientation_quat(&mut self) -> Result<Quaternion<f32>, i2c::Error> {
         let lsb: f32 = 2_i16.pow(14).into();
-        Ok(
-            Quaternion::from_xyzw(
-                self.read_i16(QUA_Data_X_LSB)? as f32 / lsb,
-                self.read_i16(QUA_Data_Y_LSB)? as f32 / lsb,
-                self.read_i16(QUA_Data_Z_LSB)? as f32 / lsb,
-                self.read_i16(QUA_Data_W_LSB)? as f32 / lsb,
-            ).normalized()
+        Ok(Quaternion::from_xyzw(
+            self.read_i16(QUA_Data_X_LSB)? as f32 / lsb,
+            self.read_i16(QUA_Data_Y_LSB)? as f32 / lsb,
+            self.read_i16(QUA_Data_Z_LSB)? as f32 / lsb,
+            self.read_i16(QUA_Data_W_LSB)? as f32 / lsb,
         )
+        .normalized())
     }
 
     fn read_i16(&mut self, addr: u8) -> Result<i16, i2c::Error> {

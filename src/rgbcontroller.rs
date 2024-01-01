@@ -1,7 +1,7 @@
-use cortex_m::interrupt::Mutex;
 use core::cell::RefCell;
+use cortex_m::interrupt::Mutex;
 use stm32f4xx_hal as hal;
-use stm32f4xx_hal::{pac::TIM3, gpio::Pin, prelude::*, timer::pwm::*, timer::Channel};
+use stm32f4xx_hal::{gpio::Pin, pac::TIM3, prelude::*, timer::pwm::*, timer::Channel};
 
 pub static RGB: Mutex<RefCell<Option<RGBController>>> = Mutex::new(RefCell::new(None));
 
@@ -31,12 +31,17 @@ impl RGBController {
                 Channel3::new(blue_pin),
             ),
             1.millis::<1, 1_000_000>(),
-            &clocks
+            &clocks,
         );
-        let mut ctl = Self { pwm, r: 0, g: 0, b: 0 };
+        let mut ctl = Self {
+            pwm,
+            r: 0,
+            g: 0,
+            b: 0,
+        };
         ctl.on();
-        
-        cortex_m::interrupt::free(|cs| RGB.borrow(cs).replace(Some(ctl)) );
+
+        cortex_m::interrupt::free(|cs| RGB.borrow(cs).replace(Some(ctl)));
     }
 
     pub fn on(&mut self) {

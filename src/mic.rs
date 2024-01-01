@@ -1,15 +1,15 @@
-use cortex_m::interrupt::Mutex;
 use core::cell::RefCell;
+use cortex_m::interrupt::Mutex;
 
 use stm32f4xx_hal::{
+    adc::{config::*, Adc},
+    gpio::{Analog, Pin},
     pac::ADC1,
-    gpio::{Pin, Analog},
-    adc::{Adc, config::*}
 };
 
 pub static MIC: Mutex<RefCell<Option<Mic>>> = Mutex::new(RefCell::new(None));
 
-pub struct Mic{
+pub struct Mic {
     pin: Pin<'B', 1, Analog>,
     adc: Adc<ADC1>,
 }
@@ -21,12 +21,10 @@ impl Mic {
             .align(Align::Right)
             .resolution(Resolution::Ten);
         cortex_m::interrupt::free(|cs| {
-            MIC.borrow(cs).replace(Some(
-                Self {
-                    pin,
-                    adc: Adc::adc1(adc, true, adc_config),
-                }
-            ));
+            MIC.borrow(cs).replace(Some(Self {
+                pin,
+                adc: Adc::adc1(adc, true, adc_config),
+            }));
         });
     }
 

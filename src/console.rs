@@ -28,7 +28,6 @@ pub struct Console {
 }
 impl Console {
     pub fn init(ctx: &mut Context) -> Self {
-
         ctx.io.write(WELCOME_MESSAGE);
         ctx.io.write(CONSOLE_PROMPT);
 

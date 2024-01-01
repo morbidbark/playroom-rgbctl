@@ -1,9 +1,9 @@
-use numtoa::NumToA;
-use core::ops::DerefMut;
 use crate::context::Context;
-use stm32f4xx_hal::prelude::*;
-use crate::rgbcontroller::*;
 use crate::imu::*;
+use crate::rgbcontroller::*;
+use core::ops::DerefMut;
+use numtoa::NumToA;
+use stm32f4xx_hal::prelude::*;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
 
@@ -93,10 +93,10 @@ fn rgb(ctx: &mut Context, argv: &[Option<&str>]) {
                             argv[2].and_then(|v| v.parse::<u8>().ok()),
                             argv[3].and_then(|v| v.parse::<u8>().ok()),
                             argv[4].and_then(|v| v.parse::<u8>().ok()),
-                        ){
-                           rgb.set_color(&Color::Red, r, true);
-                           rgb.set_color(&Color::Green, g, true);
-                           rgb.set_color(&Color::Blue, b, true);
+                        ) {
+                            rgb.set_color(&Color::Red, r, true);
+                            rgb.set_color(&Color::Green, g, true);
+                            rgb.set_color(&Color::Blue, b, true);
                         } else {
                             ctx.io.write("Invalid value.\n");
                         }
@@ -115,7 +115,13 @@ fn imu(ctx: &mut Context, _argv: &[Option<&str>]) {
     while rcvbuf[0] != EXIT_CHAR {
         if let Ok(_) = ctx.counter.wait() {
             cortex_m::interrupt::free(|cs| {
-                match IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation() {
+                match IMUReader
+                    .borrow(cs)
+                    .borrow_mut()
+                    .as_mut()
+                    .unwrap()
+                    .orientation()
+                {
                     Ok((p, y, r)) => {
                         let mut buffer = [0u8; 20];
                         ctx.io.write("Pitch: ");

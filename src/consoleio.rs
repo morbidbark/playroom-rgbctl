@@ -22,10 +22,7 @@ impl ConsoleIO {
             .unwrap()
             .split();
 
-        Self {
-            tx,
-            rx,
-        }
+        Self { tx, rx }
     }
 
     pub fn receive(&mut self, buf: &mut [u8]) -> usize {
