@@ -139,7 +139,7 @@ fn main() -> ! {
     });
     loop {
         cortex_m::interrupt::free(|cs| {
-            MODE_MANAGER.borrow(cs).borrow().as_ref().unwrap().process();
+            MODE_MANAGER.borrow(cs).borrow_mut().as_mut().unwrap().process();
         });
         // Process console IO
         console.process(&mut ctx);

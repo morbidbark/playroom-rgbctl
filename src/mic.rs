@@ -34,7 +34,7 @@ impl Mic {
         let mut min = u16::MAX;
         let mut max = 0;
         let mut value;
-        for _ in 0..20 {
+        for _ in 0..10 {
             value = self.adc.convert(&self.pin, SampleTime::Cycles_480);
             if value < min {
                 min = value;

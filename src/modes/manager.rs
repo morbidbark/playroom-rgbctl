@@ -5,7 +5,7 @@ enum Mode {
 }
 
 trait ModeRun {
-    fn run(&self);
+    fn run(&mut self);
 }
 
 pub struct ModeManager {
@@ -20,12 +20,12 @@ impl ModeManager {
     pub fn next(&mut self) {
         self.mode = match self.mode {
             Mode::Dial(_) => Mode::Tilt(TiltMode),
-            Mode::Tilt(_) => Mode::Audio(AudioMode),
+            Mode::Tilt(_) => Mode::Audio(AudioMode(0.)),
             Mode::Audio(_) => Mode::Dial(DialMode),
         };
     }
-    pub fn process(&self) {
-        match &self.mode {
+    pub fn process(&mut self) {
+        match &mut self.mode {
             Mode::Dial(m) => m.run(),
             Mode::Tilt(m) => m.run(),
             Mode::Audio(m) => m.run(),
@@ -36,7 +36,7 @@ impl ModeManager {
 use crate::rotary_encoder::*;
 pub struct DialMode;
 impl ModeRun for DialMode {
-    fn run(&self) {
+    fn run(&mut self) {
         cortex_m::interrupt::free(|cs| {
             RENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
             GENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
@@ -60,7 +60,7 @@ fn abs(x: f32) -> f32 {
 
 struct TiltMode;
 impl ModeRun for TiltMode {
-    fn run(&self) {
+    fn run(&mut self) {
         if let Ok(q) = cortex_m::interrupt::free(|cs| {
             IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().orientation_quat()
         }) {
@@ -82,19 +82,23 @@ impl ModeRun for TiltMode {
     }
 }
 
-use defmt::*;
 use crate::mic::*;
-struct AudioMode;
+const LERP_FACTOR: f32 = 0.3;
+struct AudioMode(f32);
+impl AudioMode {
+    fn lerp(&mut self, target: f32) -> f32 {
+        self.0 + (target - self.0) * LERP_FACTOR
+    }
+}
 impl ModeRun for AudioMode {
-    fn run(&self) {
+    fn run(&mut self) {
         cortex_m::interrupt::free(|cs| {
             RENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
             GENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
             BENCODER.borrow(cs).borrow_mut().as_mut().unwrap().process();
 
             let value = MIC.borrow(cs).borrow_mut().as_mut().unwrap().amplitude();
-            debug!("{}", value);
-            RGB.borrow(cs).borrow_mut().as_mut().unwrap().scale_all(value);
+            RGB.borrow(cs).borrow_mut().as_mut().unwrap().scale_all(self.lerp(value));
         });
     }
 }
