@@ -114,4 +114,11 @@ impl RGBController {
         self.set_duty(Channel::C2, g);
         self.set_duty(Channel::C3, b);
     }
+    pub fn scale(&mut self, color: &Color, scale: f32) {
+        match color {
+            Color::Red => self.set_duty(Channel::C1, ((self.r as f32) * scale) as u8),
+            Color::Green => self.set_duty(Channel::C2, ((self.g as f32) * scale) as u8),
+            Color::Blue => self.set_duty(Channel::C3, ((self.b as f32) * scale) as u8),
+        }
+    }
 }

@@ -44,6 +44,18 @@ const QUA_Data_X_LSB: u8 = 0x22; // Output data register - Quaternion X componen
 const QUA_Data_Y_LSB: u8 = 0x24; // Output data register - Quaternion Y component
 const QUA_Data_Z_LSB: u8 = 0x26; // Output data register - Quaternion Z component
 
+const LIA_DATA_X_LSB: u8 = 0x28; // Output data register - Linear Acceleration X component
+const LIA_DATA_Y_LSB: u8 = 0x2A; // Output data register - Linear Acceleration Y component
+const LIA_DATA_Z_LSB: u8 = 0x2C; // Output data register - Linear Acceleration Z component
+
+#[derive(Default, PartialEq)]
+enum IMUMode {
+    #[default]
+    None,
+    Acc,
+    Ndof,
+}
+
 pub struct IMU {
     imu: I2c<I2C1>,
 }
@@ -63,9 +75,7 @@ impl IMU {
             &clocks,
         );
         let mut result = Self { imu };
-        result
-            .write(OPR_MODE, NDOF_MODE)
-            .expect("Failed to set IMU config mode");
+        result.write(OPR_MODE, NDOF_MODE).expect("Failed to set NDOF mode");
 
         cortex_m::interrupt::free(|cs| {
             IMUReader.borrow(cs).replace(Some(result));
@@ -90,6 +100,14 @@ impl IMU {
             self.read_i16(QUA_Data_W_LSB)? as f32 / lsb,
         )
         .normalized())
+    }
+
+    pub fn accel(&mut self) -> Result<(i16, i16, i16), i2c::Error> {
+        Ok((
+            self.read_i16(LIA_DATA_X_LSB)? / 100,
+            self.read_i16(LIA_DATA_Y_LSB)? / 100,
+            self.read_i16(LIA_DATA_Z_LSB)? / 100,
+        ))
     }
 
     fn read_i16(&mut self, addr: u8) -> Result<i16, i2c::Error> {

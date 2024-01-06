@@ -13,7 +13,8 @@ impl ModeManager {
         self.mode = match self.mode {
             Mode::Dial(_) => Mode::Tilt(tilt::TiltMode),
             Mode::Tilt(_) => Mode::Audio(audio::AudioMode(0.)),
-            Mode::Audio(_) => Mode::Dial(dial::DialMode),
+            Mode::Audio(_) => Mode::Shake(shake::ShakeMode(0.,0.,0.)),
+            Mode::Shake(_) => Mode::Dial(dial::DialMode),
         };
     }
     pub fn process(&mut self) {
@@ -21,6 +22,7 @@ impl ModeManager {
             Mode::Dial(m) => m.run(),
             Mode::Tilt(m) => m.run(),
             Mode::Audio(m) => m.run(),
+            Mode::Shake(m) => m.run(),
         }
     }
 }
