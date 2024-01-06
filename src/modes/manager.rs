@@ -3,6 +3,12 @@ use super::*;
 pub struct ModeManager {
     mode: Mode,
 }
+impl Default for ModeManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ModeManager {
     pub fn new() -> Self {
         Self {
@@ -13,7 +19,7 @@ impl ModeManager {
         self.mode = match self.mode {
             Mode::Dial(_) => Mode::Tilt(tilt::TiltMode),
             Mode::Tilt(_) => Mode::Audio(audio::AudioMode(0.)),
-            Mode::Audio(_) => Mode::Shake(shake::ShakeMode(0.,0.,0.)),
+            Mode::Audio(_) => Mode::Shake(shake::ShakeMode(0., 0., 0.)),
             Mode::Shake(_) => Mode::Dial(dial::DialMode),
         };
     }

@@ -31,7 +31,7 @@ impl RGBController {
                 Channel3::new(blue_pin),
             ),
             1.millis::<1, 1_000_000>(),
-            &clocks,
+            clocks,
         );
         let mut ctl = Self {
             pwm,

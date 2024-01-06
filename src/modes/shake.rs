@@ -12,12 +12,7 @@ pub(super) struct ShakeMode(pub f32, pub f32, pub f32);
 impl ModeRun for ShakeMode {
     fn run(&mut self) {
         if let Ok((x, y, z)) = cortex_m::interrupt::free(|cs| {
-            IMUReader
-                .borrow(cs)
-                .borrow_mut()
-                .as_mut()
-                .unwrap()
-                .accel()
+            IMUReader.borrow(cs).borrow_mut().as_mut().unwrap().accel()
         }) {
             self.0 = lerp(self.0, x.abs() as f32 / MAX_ACCEL);
             self.1 = lerp(self.1, y.abs() as f32 / MAX_ACCEL);

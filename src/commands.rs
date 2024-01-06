@@ -7,7 +7,7 @@ use stm32f4xx_hal::prelude::*;
 
 const VERSION_STRING: &str = "playroom-rgbctl 0.1.0";
 
-const EXIT_CHAR: u8 = 'q' as u8;
+const EXIT_CHAR: u8 = b'q';
 
 pub const COMMANDS: [Command; 6] = [
     Command {
@@ -113,7 +113,7 @@ fn imu(ctx: &mut Context, _argv: &[Option<&str>]) {
     let display_freq = 500.millis();
     ctx.counter.start(display_freq).unwrap();
     while rcvbuf[0] != EXIT_CHAR {
-        if let Ok(_) = ctx.counter.wait() {
+        if ctx.counter.wait().is_ok() {
             cortex_m::interrupt::free(|cs| {
                 match IMUReader
                     .borrow(cs)

@@ -1,17 +1,14 @@
-use stm32f4xx_hal as hal;
-use stm32f4xx_hal::pac;
-
 use core::str::from_utf8;
 
 use crate::commands::COMMANDS;
-use crate::consoleio::*;
+
 use crate::context::Context;
 
 const MAX_COMMAND_LEN: usize = 64;
 
-static SEP_CHAR: u8 = ' ' as u8;
-static CR_CHAR: u8 = '\r' as u8;
-static LF_CHAR: u8 = '\n' as u8;
+static SEP_CHAR: u8 = b' ';
+static CR_CHAR: u8 = b'\r';
+static LF_CHAR: u8 = b'\n';
 
 const WELCOME_MESSAGE: &str = r#"
 +---------------------------------------------+
@@ -53,7 +50,7 @@ impl Console {
                     }
                 }
                 if let Some(name) = argv[0] {
-                    if name.len() > 0 {
+                    if !name.is_empty() {
                         let mut found = false;
                         for command in COMMANDS.iter() {
                             if command.name == name {

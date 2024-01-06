@@ -2,8 +2,8 @@ pub mod manager;
 
 mod audio;
 mod dial;
-mod tilt;
 mod shake;
+mod tilt;
 
 enum Mode {
     Dial(dial::DialMode),

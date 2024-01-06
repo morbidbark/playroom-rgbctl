@@ -72,10 +72,12 @@ impl IMU {
             Mode::Standard {
                 frequency: 100.kHz(),
             },
-            &clocks,
+            clocks,
         );
         let mut result = Self { imu };
-        result.write(OPR_MODE, NDOF_MODE).expect("Failed to set NDOF mode");
+        result
+            .write(OPR_MODE, NDOF_MODE)
+            .expect("Failed to set NDOF mode");
 
         cortex_m::interrupt::free(|cs| {
             IMUReader.borrow(cs).replace(Some(result));
